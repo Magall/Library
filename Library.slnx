@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Library.API/">
+    <Project Path="Library.API/Library.csproj" />
+  </Folder>
+  <Project Path="Library.Tests/Library.Tests.csproj" />
+</Solution>

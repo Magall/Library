@@ -1,0 +1,15 @@
+# Build output
+bin*/
+obj*/
+
+# IDE / OS
+.vs/
+.idea/
+.vscode/
+.DS_Store
+
+# Verify snapshot working files (the .verified.* files are committed)
+*.received.*
+
+# Local-only settings with credentials (see appsettings.Development.example.json)
+Library.API/appsettings.Development.json

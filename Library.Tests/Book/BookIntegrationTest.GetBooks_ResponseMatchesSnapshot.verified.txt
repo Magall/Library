@@ -1,0 +1,13 @@
+﻿[
+  {
+    publishDate: 2020-08-08,
+    bookNumber: BOOK-1,
+    authors: [
+      {
+        name: Robert Martin,
+        authorNumber: A-1
+      }
+    ],
+    title: Clean Code
+  }
+]
