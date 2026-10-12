@@ -18,6 +18,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
 builder.Services.AddScoped<ILendsService, LendsService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.Configure<LendsOptions>(builder.Configuration.GetSection(LendsOptions.SectionName));
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddDbContext<LibraryDbContext>(options =>
