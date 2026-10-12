@@ -75,6 +75,14 @@ public class LendsServiceTest
         Assert.NotNull(lendsOptions);
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var userRepository = Substitute.For<IUserRepository>();
+        userRepository.GetUserBySSN(userSSN).Returns(new User
+        {
+            UserId = Guid.NewGuid(),
+            Name = "Rafael Gomes",
+            SSN = userSSN,
+            IsActive = true,
+
+        });
 
 
         var lendsService = new LendsService(userRepository, lendsRepository, Options.Create(lendsOptions), timeProvider);
@@ -95,6 +103,14 @@ public class LendsServiceTest
         lendsRepository.IsBookItemLent(bookItemId).Returns(true);
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var userRepository = Substitute.For<IUserRepository>();
+        userRepository.GetUserBySSN(userSSN).Returns(new User
+        {
+            UserId = Guid.NewGuid(),
+            Name = "Rafael Gomes",
+            SSN = userSSN,
+            IsActive = true,
+
+        });
 
 
         var lendsService = new LendsService(userRepository, lendsRepository, Options.Create(lendsOptions), timeProvider);
