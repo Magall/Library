@@ -64,15 +64,6 @@ public sealed class BookIntegrationTest : IClassFixture<ApiFactory>, IDisposable
     }
 
     [Fact]
-    public async Task GetBooks_ReturnsCorectContract()
-    {
-        _context.Books.Add(BookFactory.MockBook("Dune"));
-        await _context.SaveChangesAsync();
-
-        var response = _client.GetAsync("/api/books");
-    }
-
-    [Fact]
     public async Task GetBooks_ResponseMatchesSnapshot()
     {
         var author = new Author

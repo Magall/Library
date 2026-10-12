@@ -1,6 +1,7 @@
 using Library.Database;
 using Library.Repositories;
 using Library.Services;
+using Library.Settings;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +17,14 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IBookRepository, BookRepository>();
-
+builder.Services.AddScoped<ILendsService, LendsService>();
+builder.Services.Configure<LendsOptions>(builder.Configuration.GetSection(LendsOptions.SectionName));
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
+builder.Services.Configure<LendsOptions>(
+    builder.Configuration.GetSection(LendsOptions.SectionName));
 
 var app = builder.Build();
 
