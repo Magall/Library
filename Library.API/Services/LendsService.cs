@@ -2,6 +2,7 @@ using Library.Database.Models;
 using Library.Exceptions;
 using Library.Repositories;
 using Library.Settings;
+using Library.Utils;
 using Microsoft.Extensions.Options;
 
 namespace Library.Services;
@@ -20,19 +21,21 @@ public class LendsService : ILendsService
         _options = options.Value;
         _timeProvider = timeProvider;
     }
-    public async Task<LendDto> LendBook(Guid bookItemId, string SSN)
+    public async Task<LendResponseDto> LendBook(Guid bookItemId, string SSN)
     {
         var user = await _usersRepository.GetUserBySSN(SSN);
         if (user is null)
         {
             throw new UserNotFoundException($"User not found by SSN {SSN}");
         }
-        await BooksValidations(bookItemId, SSN);
-
+        await BooksValidations(bookItemId, user.UserId);
+        var lendDurationInBusinessDays = _options.LendingDurationInWorkingDays;
         var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
-        var lend = await _lendsRepository.CreateLend(bookItemId, user.UserId, today);
+        var returnalDate = DateExtensions.AddWorkingDays(today, lendDurationInBusinessDays);
 
-        var lendDto = new LendDto
+        var lend = await _lendsRepository.CreateLend(bookItemId, user.UserId, today,returnalDate);
+
+        var lendDto = new LendResponseDto
         {
             BookItemId = lend.BookItemId,
             ReturnalDate = lend.EndDate,
@@ -42,10 +45,10 @@ public class LendsService : ILendsService
 
         return lendDto;
     }
-    private async Task BooksValidations(Guid bookItemId, string SSN)
+    private async Task BooksValidations(Guid bookItemId, Guid userId)
     {
 
-        var booksOnUserBehold = await _lendsRepository.GetQuantityOfBooksOnUsersBehold(SSN);
+        var booksOnUserBehold = await _lendsRepository.GetQuantityOfBooksOnUsersBehold(userId);
         if (booksOnUserBehold >= _options.MaxSimultaneousLends)
         {
             throw new TooManyBooksException(

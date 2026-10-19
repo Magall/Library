@@ -17,12 +17,16 @@ public static class BookFactory
 
 
 
-    public static BookModel MockBook(string title = "My Title", params Author[] authors) =>
-        MockBook(title, null, authors);
 
-    public static BookModel MockBook(string title, string? bookNumber, params Author[] authors) => new()
+    public static BookModel MockBook(string title = "My Title", params Author[] authors) =>
+        MockBook(title, null, null, authors);
+
+
+    public static BookModel MockBook(Guid bookId, string title = "My Title", params Author[] authors) =>
+            MockBook(title, null, bookId, authors);
+    public static BookModel MockBook(string title, string? bookNumber, Guid? bookId = null, params Author[] authors) => new()
     {
-        BookId = Guid.NewGuid(),
+        BookId = bookId ?? Guid.NewGuid(),
         Title = title,
         PublishDate = new DateOnly(2020, 8, 8),
         BookNumber = bookNumber ?? String.Format("BOOK-{0}", Guid.NewGuid()),

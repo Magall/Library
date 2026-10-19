@@ -1,4 +1,4 @@
-public class LendDto
+public class LendResponseDto
 {
     public Guid BookItemId { get; set; }
     public DateOnly ReturnalDate { get; set; }

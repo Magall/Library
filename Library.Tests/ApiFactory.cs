@@ -6,15 +6,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Library.Tests;
 
 public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+    public FakeTimeProvider Time { get; } =
+        new(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+
         _connection.Open();
 
         builder.ConfigureServices(services =>
@@ -24,6 +29,9 @@ public class ApiFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<DbContextOptions<LibraryDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<LibraryDbContext>>();
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Time);
+
 
             // 2. Register LibraryDbContext again, using SQLite on _connection.   
             services.AddDbContext<LibraryDbContext>(options =>
@@ -35,6 +43,14 @@ public class ApiFactory : WebApplicationFactory<Program>
             //    and call EnsureCreated().   
             db.Database.EnsureCreated();
         });
+        builder.ConfigureAppConfiguration((_, config) =>
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Lends:MaxSimultaneousLends"] = "3",
+                ["Lends:LendingDurationInWorkingDays"] = "5",
+            }
+        ));
+
     }
 
     protected override void Dispose(bool disposing)

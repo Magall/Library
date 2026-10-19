@@ -14,11 +14,35 @@ RESTART IDENTITY CASCADE;
 -- LIBRARY API - SEED DATA
 -- PostgreSQL / EF Core
 --
+-- 10 users (7 regular, 1 past ban, 1 currently banned, 1 inactive)
 -- 6 authors
 -- 30 books
 -- 10 books with multiple authors
 -- 150 book items (5 copies per book)
 -- ============================================================
+
+-- ============================================================
+-- USERS
+-- ============================================================
+
+INSERT INTO "Users" ("UserId", "Name", "SSN", "EndOfBan", "IsActive")
+VALUES
+    ('b0000001-0000-0000-0000-000000000001', 'Alice Johnson',   'SSN-001', NULL,         TRUE),
+    ('b0000002-0000-0000-0000-000000000002', 'Bruno Carvalho',  'SSN-002', NULL,         TRUE),
+    ('b0000003-0000-0000-0000-000000000003', 'Carla Mendes',    'SSN-003', NULL,         TRUE),
+    ('b0000004-0000-0000-0000-000000000004', 'David Lee',       'SSN-004', NULL,         TRUE),
+    ('b0000005-0000-0000-0000-000000000005', 'Elena Petrova',   'SSN-005', NULL,         TRUE),
+    ('b0000006-0000-0000-0000-000000000006', 'Felipe Santos',   'SSN-006', NULL,         TRUE),
+    ('b0000007-0000-0000-0000-000000000007', 'Grace Kim',       'SSN-007', NULL,         TRUE),
+
+    -- ban already over
+    ('b0000008-0000-0000-0000-000000000008', 'Hugo Almeida',    'SSN-008', '2026-09-01', TRUE),
+
+    -- currently banned
+    ('b0000009-0000-0000-0000-000000000009', 'Isabel Torres',   'SSN-009', '2026-12-31', TRUE),
+
+    -- inactive account
+    ('b0000010-0000-0000-0000-000000000010', 'João Pereira',    'SSN-010', NULL,         FALSE);
 
 -- ============================================================
 -- AUTHORS

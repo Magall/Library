@@ -3,5 +3,5 @@ namespace Library.Services;
 
 public interface ILendsService
 {
-    public Task<LendDto> LendBook(Guid bookItemId, string SSN);
+    public Task<LendResponseDto> LendBook(Guid bookItemId, string SSN);
 }

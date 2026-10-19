@@ -72,7 +72,7 @@ public sealed class BookIntegrationTest : IClassFixture<ApiFactory>, IDisposable
             Name = "Robert Martin",
             AuthorNumber = "A-1"
         };
-        _context.Books.Add(BookFactory.MockBook("Clean Code", "BOOK-1", author));
+        _context.Books.Add(BookFactory.MockBook("Clean Code", "BOOK-1", null, author));
         await _context.SaveChangesAsync();
 
         var response = await _client.GetAsync("/api/books");

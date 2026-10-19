@@ -106,6 +106,9 @@ namespace Library.Migrations
                     b.Property<DateOnly>("EndDate")
                         .HasColumnType("date");
 
+                    b.Property<DateOnly?>("ReturnedDate")
+                        .HasColumnType("date");
+
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
 
@@ -174,17 +177,21 @@ namespace Library.Migrations
 
             modelBuilder.Entity("Library.Database.Models.Lend", b =>
                 {
-                    b.HasOne("Library.Database.Models.BookItem", null)
+                    b.HasOne("Library.Database.Models.BookItem", "BookItem")
                         .WithMany("Lends")
                         .HasForeignKey("BookItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Library.Database.Models.User", null)
+                    b.HasOne("Library.Database.Models.User", "User")
                         .WithMany("Lends")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("BookItem");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Library.Database.Models.Book", b =>

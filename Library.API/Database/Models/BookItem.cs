@@ -11,5 +11,5 @@ public class BookItem
 
     public Guid BookId { get; set; }
     public Book Book { get; set; } = null!;
-    public ICollection<Lend> Lends { get;} = new List<Lend>();
+    public ICollection<Lend> Lends { get; set; }
 }

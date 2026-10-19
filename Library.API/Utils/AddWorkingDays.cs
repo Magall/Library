@@ -3,7 +3,7 @@ namespace Library.Utils;
 public static class DateExtensions
 {
 
-    public static DateTime AddWorkingDays(DateTime start, int days)
+    public static DateOnly AddWorkingDays(DateOnly start, int days)
     {
         var date = start;
         var added = 0;

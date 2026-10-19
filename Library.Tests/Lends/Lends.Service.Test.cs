@@ -1,19 +1,14 @@
-// If user has reached max simultaneous lend we shoud show an exception
 
-using Castle.Core.Configuration;
-using Microsoft.VisualBasic;
 using NSubstitute;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Library.Settings;
 using Library.Repositories;
 using Library.Services;
-using Microsoft.EntityFrameworkCore.Query;
 using Library.Exceptions;
 using Library.Database.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Time.Testing;
-using NSubstitute.ReturnsExtensions;
+using Library.Utils;
 
 namespace Library.Tests;
 
@@ -26,10 +21,6 @@ public class LendsServiceTest
         _lendsSection = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json")
             .Build().GetSection(LendsOptions.SectionName);
-
-
-
-
     }
 
 
@@ -67,17 +58,18 @@ public class LendsServiceTest
     public async Task LendBook_ThrowsToManyBooksWhenLimitIsReached()
     {
         var maxSimultaneosLends = 3;
+        var userId = Guid.NewGuid();
         var bookGuid = Guid.NewGuid();
         var userSSN = "SSN001";
         var lendsRepository = Substitute.For<ILendsRepository>();
-        lendsRepository.GetQuantityOfBooksOnUsersBehold("SSN001").Returns(maxSimultaneosLends);
+        lendsRepository.GetQuantityOfBooksOnUsersBehold(userId).Returns(maxSimultaneosLends);
         var lendsOptions = new LendsOptions { MaxSimultaneousLends = maxSimultaneosLends };
         Assert.NotNull(lendsOptions);
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var userRepository = Substitute.For<IUserRepository>();
         userRepository.GetUserBySSN(userSSN).Returns(new User
         {
-            UserId = Guid.NewGuid(),
+            UserId = userId,
             Name = "Rafael Gomes",
             SSN = userSSN,
             IsActive = true,
@@ -99,7 +91,7 @@ public class LendsServiceTest
         var userSSN = "SSN001";
         var lendsRepository = Substitute.For<ILendsRepository>();
         var lendsOptions = new LendsOptions { MaxSimultaneousLends = 3 };
-        lendsRepository.GetQuantityOfBooksOnUsersBehold(userSSN).Returns(1);
+        lendsRepository.GetQuantityOfBooksOnUsersBehold(Guid.NewGuid()).Returns(1);
         lendsRepository.IsBookItemLent(bookItemId).Returns(true);
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var userRepository = Substitute.For<IUserRepository>();
@@ -143,7 +135,11 @@ public class LendsServiceTest
             IsActive = true,
 
         });
-        lendsRepository.CreateLend(bookItemId, userId, today).Returns(new Lend
+        var timeProvider = new FakeTimeProvider(
+                new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero)
+        );
+        var returnalDate = DateExtensions.AddWorkingDays(today, options.LendingDurationInWorkingDays);
+        lendsRepository.CreateLend(bookItemId, userId, today, returnalDate).Returns(new Lend
         {
             LendId = Guid.NewGuid(),
             BookItemId = bookItemId,
@@ -153,9 +149,6 @@ public class LendsServiceTest
 
         });
 
-        var timeProvider = new FakeTimeProvider(
-                new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero)
-        );
         var lendsService = new LendsService(
             userRepository,
             lendsRepository,

@@ -4,7 +4,7 @@ namespace Library.Repositories;
 
 public interface ILendsRepository
 {
-    public Task<int> GetQuantityOfBooksOnUsersBehold(string SSN);
+    public Task<int> GetQuantityOfBooksOnUsersBehold(Guid userId);
     public Task<bool> IsBookItemLent(Guid bookItemId);
-    public Task<Lend> CreateLend(Guid bookItemId, Guid userId, DateOnly lendDate);
+    public Task<Lend> CreateLend(Guid bookItemId, Guid userId, DateOnly lendDate, DateOnly returnalDate);
 }

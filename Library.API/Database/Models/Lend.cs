@@ -15,8 +15,13 @@ namespace Library.Database.Models
 
         [Required]
         public DateOnly StartDate { get; set; }
-
         [Required]
         public DateOnly EndDate { get; set; }
+
+        public DateOnly? ReturnedDate { get; set; }
+
+        public BookItem BookItem { get; set; } = null!;
+        public User User { get; set; } = null!;
+
     }
 }
