@@ -21,4 +21,11 @@ public class LendsController : ControllerBase
         var lend = await _lendsService.Lend(request.BookItemId, request.SSN);
         return Ok(lend);
     }
+
+    [HttpPost("return")]
+    public async Task<ActionResult<LendReturnResponseDto>> ReturnLend([FromBody] LendRequestDto request)
+    {
+        var lend = await _lendsService.ReturnLend(request.BookItemId,request.SSN);
+        return Ok(lend);    
+    }
 }

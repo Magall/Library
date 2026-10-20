@@ -62,6 +62,40 @@ public sealed class LendsIntegrationTest : IClassFixture<ApiFactory>, IDisposabl
         Assert.Equal(new DateOnly(2026, 10, 19), lendDto.ReturnalDate);
     }
 
+    [Fact]
+    public async Task ReturnLends_DisplaysCorrectData()
+    {
+        var userId = Guid.NewGuid();
+        var Ssn = "SSN-01";
+        var bookId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var user = LendsFactory.MockUser(userId, Ssn);
+        var book = BookFactory.MockBook(bookId);
+        var bookItem = LendsFactory.MockBookItem(bookId, bookItemId);
+        var startDate = new DateOnly(2026, 10, 05);
+        var endDate = new DateOnly(2026, 10, 12);
+        var today = new DateOnly(2026,10,12); // Setted as fake timer on ApiFactory
+        var lend = LendsFactory.MockLend(userId, bookItemId, startDate, endDate);
+        _context.Users.Add(user);
+        _context.Books.Add(book);
+        _context.BookItems.Add(bookItem);
+        _context.Lends.Add(lend);
+        await _context.SaveChangesAsync();
+        var request = new LendRequestDto
+        {
+            SSN = Ssn,
+            BookItemId = bookItemId
+        };
+
+        var response = await _client.PostAsJsonAsync("/api/lends/return", request);
+        var returnLendDto = await response.Content.ReadFromJsonAsync<LendReturnResponseDto>();
+
+        Assert.NotNull(returnLendDto);
+        Assert.Equal(Ssn,returnLendDto.SSN);
+        Assert.Equal("My name",returnLendDto.Name);
+        Assert.Equal(bookItemId,returnLendDto.BookItemId);
+        Assert.Equal(today,returnLendDto.ReturnedDate);
+    }
     public void Dispose()
     {
         _scope.Dispose();
