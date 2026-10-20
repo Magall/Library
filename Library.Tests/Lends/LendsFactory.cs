@@ -2,10 +2,11 @@ using Library.Database.Models;
 using Library.Tests.Book;
 
 namespace Library.Tests.Lends;
+
 public static class LendsFactory
 {
 
-    public static User MockUser(Guid userId,string SSN = "SSN01")
+    public static User MockUser(Guid userId, string SSN = "SSN01")
     {
         return new User
         {
@@ -26,6 +27,17 @@ public static class LendsFactory
             BookId = bookId
         };
 
+    }
+
+    public static Lend MockLend(Guid userId, Guid bookItemId, DateOnly startDate, DateOnly endDate)
+    {
+        return new Lend
+        {
+            UserId = userId,
+            BookItemId = bookItemId,
+            StartDate = startDate,
+            EndDate = endDate
+        };
     }
 }
 

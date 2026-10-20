@@ -9,6 +9,9 @@ using Library.Exceptions;
 using Library.Database.Models;
 using Microsoft.Extensions.Time.Testing;
 using Library.Utils;
+using NSubstitute.ReturnsExtensions;
+using Library.Tests.Lends;
+using Library.Tests.Book;
 
 namespace Library.Tests;
 
@@ -50,7 +53,7 @@ public class LendsServiceTest
         );
 
         await Assert.ThrowsAsync<UserNotFoundException>(() =>
-        lendingService.LendBook(Guid.NewGuid(), "SSN001"));
+        lendingService.Lend(Guid.NewGuid(), "SSN001"));
 
     }
 
@@ -80,7 +83,7 @@ public class LendsServiceTest
         var lendsService = new LendsService(userRepository, lendsRepository, Options.Create(lendsOptions), timeProvider);
 
         await Assert.ThrowsAsync<TooManyBooksException>(() =>
-            lendsService.LendBook(bookGuid, userSSN));
+            lendsService.Lend(bookGuid, userSSN));
 
     }
 
@@ -108,7 +111,7 @@ public class LendsServiceTest
         var lendsService = new LendsService(userRepository, lendsRepository, Options.Create(lendsOptions), timeProvider);
 
         await Assert.ThrowsAsync<BookAlreadyLentException>(() =>
-            lendsService.LendBook(bookItemId, userSSN));
+            lendsService.Lend(bookItemId, userSSN));
 
     }
 
@@ -156,13 +159,91 @@ public class LendsServiceTest
             timeProvider
         );
 
-        var response = await lendsService.LendBook(bookItemId, userSSN);
-
+        var response = await lendsService.Lend(bookItemId, userSSN);
 
         Assert.Equal(bookItemId, response.BookItemId);
         Assert.Equal("SSN001", response.SSN);
         Assert.Equal(new DateOnly(2026, 10, 19), response.ReturnalDate);
     }
+
+    [Fact]
+    public async Task ReturnLend_ThrowsUserNotFoundExceptionIfSSNnotFound()
+    {
+        var bookItemId = Guid.NewGuid();
+        var SSN = "SSN-001";
+        var lendsRepository = Substitute.For<ILendsRepository>();
+        var usersRepository = Substitute.For<IUserRepository>();
+        var options = new LendsOptions { };
+        var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
+        usersRepository.GetUserBySSN(SSN).ReturnsNull();
+        var lendsService = new LendsService(usersRepository, lendsRepository, Options.Create(options), timeProvider);
+
+        await Assert.ThrowsAsync<UserNotFoundException>(() => lendsService.ReturnLend(bookItemId, SSN));
+    }
+
+    [Fact]
+    public async Task ReturnLend_ThrowsBookIsNotLentForUserIfLendNotFound()
+    {
+        var bookItemId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var SSN = "SSN-001";
+        var user = LendsFactory.MockUser(userId, SSN);
+        var usersRepository = Substitute.For<IUserRepository>();
+        var lendsRepository = Substitute.For<ILendsRepository>();
+        var options = new LendsOptions { };
+        var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
+        usersRepository.GetUserBySSN(SSN).Returns(user);
+        lendsRepository.GetLend(bookItemId, userId).ReturnsNull();
+
+        var lendsService = new LendsService(usersRepository, lendsRepository, Options.Create(options), timeProvider);
+        await Assert.ThrowsAsync<LendNotFoundException>(() => lendsService.ReturnLend(bookItemId, SSN));
+    }
+
+    [Fact]
+    public async Task ReturnLend_ReturnsDtoOnSuccessfullReturn()
+    {
+        var timeProvider = new FakeTimeProvider
+            (new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 5);
+        var endDate = new DateOnly(2026, 10, 12);
+        var returnedDate = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
+        var SSN = "SSN-001";
+        var usersName = "Rafael";
+        var lendsRepository = Substitute.For<ILendsRepository>();
+        var usersRepository = Substitute.For<IUserRepository>();
+        var options = new LendsOptions { };
+        usersRepository.GetUserBySSN(SSN).Returns(new User
+        {
+            UserId = userId,
+            SSN = SSN,
+            Name = usersName
+        });
+        lendsRepository.GetLend(bookItemId, userId)
+            .Returns(LendsFactory.MockLend(userId, bookItemId, startDate, endDate));
+
+        lendsRepository.ReturnLend(bookItemId, userId, returnedDate)
+            .Returns(new Lend
+            {
+                UserId = userId,
+                BookItemId = bookItemId,
+                StartDate = startDate,
+                EndDate = endDate,
+                ReturnedDate = returnedDate
+            });
+        var lendsService = new LendsService(usersRepository, lendsRepository, Options.Create(options), timeProvider);
+
+
+        var result = await lendsService.ReturnLend(bookItemId, SSN);
+
+
+        Assert.Equal(usersName, result.Name);
+        Assert.Equal(SSN, result.SSN);
+        Assert.Equal(returnedDate, result.ReturnedDate);
+        Assert.Equal(bookItemId, result.BookItemId);
+    }
+
 
 
 }

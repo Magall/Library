@@ -27,7 +27,7 @@ public class LendsRepository : ILendsRepository
         await _context.SaveChangesAsync();
         return lend;
     }
-
+    
     public async Task<int> GetQuantityOfBooksOnUsersBehold(Guid userId)
     {
         return await _context.Lends.CountAsync(lend =>
@@ -38,5 +38,15 @@ public class LendsRepository : ILendsRepository
     {
         return await _context.Lends.AnyAsync(lend =>
             lend.BookItemId == bookItemId && lend.ReturnedDate == null);
+    }
+
+    public Task<Lend> ReturnLend(Guid bookItem, Guid userId, DateOnly returnedDate)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<Lend> GetLend(Guid bookItemId, Guid userId)
+    {
+        throw new NotImplementedException();
     }
 }

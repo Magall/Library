@@ -1,8 +1,10 @@
 using Library.Database.Models;
+using Library.DTOs;
 using Library.Exceptions;
 using Library.Repositories;
 using Library.Settings;
 using Library.Utils;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 
 namespace Library.Services;
@@ -21,7 +23,7 @@ public class LendsService : ILendsService
         _options = options.Value;
         _timeProvider = timeProvider;
     }
-    public async Task<LendResponseDto> LendBook(Guid bookItemId, string SSN)
+    public async Task<LendResponseDto> Lend(Guid bookItemId, string SSN)
     {
         var user = await _usersRepository.GetUserBySSN(SSN);
         if (user is null)
@@ -33,7 +35,7 @@ public class LendsService : ILendsService
         var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
         var returnalDate = DateExtensions.AddWorkingDays(today, lendDurationInBusinessDays);
 
-        var lend = await _lendsRepository.CreateLend(bookItemId, user.UserId, today,returnalDate);
+        var lend = await _lendsRepository.CreateLend(bookItemId, user.UserId, today, returnalDate);
 
         var lendDto = new LendResponseDto
         {
@@ -45,6 +47,35 @@ public class LendsService : ILendsService
 
         return lendDto;
     }
+
+    public async Task<LendReturnResponseDto> ReturnLend(Guid bookItemId, string SSN)
+    {
+        var user = await _usersRepository.GetUserBySSN(SSN);
+        if (user is null)
+        {
+            throw new UserNotFoundException($"User not found by SSN {SSN}");
+        }
+        var lend = await _lendsRepository.GetLend(bookItemId, user.UserId);
+        if (lend is null)
+        {
+            throw new LendNotFoundException($"This book {bookItemId} is not lent for this user {SSN}");
+        }
+
+        var returnedDate = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+        var lendReturn = await _lendsRepository.ReturnLend(lend.BookItemId, user.UserId, returnedDate);
+        var result = new LendReturnResponseDto
+        {
+            SSN = user.SSN,
+            Name = user.Name,
+            ReturnedDate = lendReturn.ReturnedDate
+                ?? throw new InvalidOperationException("Lend was returned but has no ReturnedDate"),
+            BookItemId = lend.BookItemId
+        };
+
+
+        return result;
+    }
+
     private async Task BooksValidations(Guid bookItemId, Guid userId)
     {
 
