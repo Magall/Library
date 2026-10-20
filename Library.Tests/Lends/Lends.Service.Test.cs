@@ -193,7 +193,7 @@ public class LendsServiceTest
         var options = new LendsOptions { };
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         usersRepository.GetUserBySSN(SSN).Returns(user);
-        lendsRepository.GetLend(bookItemId, userId).ReturnsNull();
+        lendsRepository.GetOpenLend(bookItemId, userId).ReturnsNull();
 
         var lendsService = new LendsService(usersRepository, lendsRepository, Options.Create(options), timeProvider);
         await Assert.ThrowsAsync<LendNotFoundException>(() => lendsService.ReturnLend(bookItemId, SSN));
@@ -220,7 +220,7 @@ public class LendsServiceTest
             SSN = SSN,
             Name = usersName
         });
-        lendsRepository.GetLend(bookItemId, userId)
+        lendsRepository.GetOpenLend(bookItemId, userId)
             .Returns(LendsFactory.MockLend(userId, bookItemId, startDate, endDate));
 
         lendsRepository.ReturnLend(bookItemId, userId, returnedDate)

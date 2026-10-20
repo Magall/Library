@@ -55,7 +55,7 @@ public class LendsService : ILendsService
         {
             throw new UserNotFoundException($"User not found by SSN {SSN}");
         }
-        var lend = await _lendsRepository.GetLend(bookItemId, user.UserId);
+        var lend = await _lendsRepository.GetOpenLend(bookItemId, user.UserId);
         if (lend is null)
         {
             throw new LendNotFoundException($"This book {bookItemId} is not lent for this user {SSN}");

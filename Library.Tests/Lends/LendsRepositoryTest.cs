@@ -243,7 +243,7 @@ public class LendsRepositoryTest : IDisposable
         );
 
         var lendsRepository = new LendsRepository(_context);
-        var lend = await lendsRepository.GetLend(bookItemId, userId);
+        var lend = await lendsRepository.GetOpenLend(bookItemId, userId);
 
         Assert.NotNull(lend);
         Assert.Equal(bookItemId, lend.BookItemId);
@@ -266,7 +266,7 @@ public class LendsRepositoryTest : IDisposable
         );
 
         var lendsRepository = new LendsRepository(_context);
-        var result = await lendsRepository.GetLend(bookItemId, userId);
+        var result = await lendsRepository.GetOpenLend(bookItemId, userId);
 
         Assert.Null(result);
     }
@@ -287,7 +287,7 @@ public class LendsRepositoryTest : IDisposable
         );
 
         var lendsRepository = new LendsRepository(_context);
-        var result = await lendsRepository.GetLend(bookItemId, otherUserId);
+        var result = await lendsRepository.GetOpenLend(bookItemId, otherUserId);
 
         Assert.Null(result);
     }
@@ -308,7 +308,7 @@ public class LendsRepositoryTest : IDisposable
         );
 
         var lendsRepository = new LendsRepository(_context);
-        var result = await lendsRepository.GetLend(otherBookItemId, userId);
+        var result = await lendsRepository.GetOpenLend(otherBookItemId, userId);
 
         Assert.Null(result);
     }
@@ -334,7 +334,7 @@ public class LendsRepositoryTest : IDisposable
         );
 
         var lendsRepository = new LendsRepository(_context);
-        var lend = await lendsRepository.GetLend(bookItemId, userId);
+        var lend = await lendsRepository.GetOpenLend(bookItemId, userId);
 
         Assert.NotNull(lend);
         Assert.Equal(bookItemId, lend.BookItemId);

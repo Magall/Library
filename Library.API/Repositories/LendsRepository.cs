@@ -45,7 +45,7 @@ public class LendsRepository : ILendsRepository
         throw new NotImplementedException();
     }
 
-    public async Task<Lend?> GetLend(Guid bookItemId, Guid userId)
+    public async Task<Lend?> GetOpenLend(Guid bookItemId, Guid userId)
     {
         return await _context.Lends.SingleOrDefaultAsync(lend =>
             lend.BookItemId == bookItemId && lend.UserId == userId && lend.ReturnedDate == null);
