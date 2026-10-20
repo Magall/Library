@@ -228,6 +228,120 @@ public class LendsRepositoryTest : IDisposable
         Assert.Null(result.ReturnedDate);
     }
 
+    [Fact]
+    public async Task GetLends_ReturnsOpenLendForUserAndBookId()
+    {
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        await CreateLends([LendsFactory.MockLend(userId, bookItemId, startDate, endDate)],
+            bookId,
+            userId,
+            bookItemId
+        );
+
+        var lendsRepository = new LendsRepository(_context);
+        var lend = await lendsRepository.GetLend(bookItemId, userId);
+
+        Assert.NotNull(lend);
+        Assert.Equal(bookItemId, lend.BookItemId);
+        Assert.Equal(userId, lend.UserId);
+        Assert.Null(lend.ReturnedDate);
+    }
+    [Fact]
+    public async Task GetLends_ReturnsNullIfLendsHaveBeenReturned()
+    {
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        var returnedDate = new DateOnly(2026, 10, 19);
+        await CreateLends([LendsFactory.MockLend(userId, bookItemId, startDate, endDate, returnedDate)],
+            bookId,
+            userId,
+            bookItemId
+        );
+
+        var lendsRepository = new LendsRepository(_context);
+        var result = await lendsRepository.GetLend(bookItemId, userId);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetLends_ReturnsNullIfLendBelongsToOtherUser()
+    {
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        await CreateLends([LendsFactory.MockLend(userId, bookItemId, startDate, endDate)],
+            bookId,
+            userId,
+            bookItemId
+        );
+
+        var lendsRepository = new LendsRepository(_context);
+        var result = await lendsRepository.GetLend(bookItemId, otherUserId);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetLends_ReturnsNullIfLendBelongsToOtherBookItem()
+    {
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var otherBookItemId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        await CreateLends([LendsFactory.MockLend(userId, bookItemId, startDate, endDate)],
+            bookId,
+            userId,
+            bookItemId
+        );
+
+        var lendsRepository = new LendsRepository(_context);
+        var result = await lendsRepository.GetLend(otherBookItemId, userId);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetLends_ReturnsOnlyOpenLend()
+    {
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        var historyReturnedDate = new DateOnly(2026, 9, 11);
+        var historyStartDate = new DateOnly(2026, 9, 5);
+        var historyEndDate = new DateOnly(2026, 9, 11);
+        await CreateLends([
+                LendsFactory.MockLend(userId, bookItemId, startDate, endDate),
+                LendsFactory.MockLend(userId, bookItemId, historyStartDate, historyEndDate, historyReturnedDate)
+            ],
+            bookId,
+            userId,
+            bookItemId
+        );
+
+        var lendsRepository = new LendsRepository(_context);
+        var lend = await lendsRepository.GetLend(bookItemId, userId);
+
+        Assert.NotNull(lend);
+        Assert.Equal(bookItemId, lend.BookItemId);
+        Assert.Equal(userId, lend.UserId);
+        Assert.Equal(startDate,lend.StartDate);
+        Assert.Null(lend.ReturnedDate);
+    }
 
     public void Dispose()
     {
@@ -238,9 +352,9 @@ public class LendsRepositoryTest : IDisposable
     private async Task CreateUser(Guid userId)
     {
         var user = LendsFactory.MockUser(userId);
-        
+
         _context.Users.Add(user);
-        
+
         await _context.SaveChangesAsync();
     }
 
@@ -248,10 +362,10 @@ public class LendsRepositoryTest : IDisposable
     {
         var book = BookFactory.MockBook(bookId);
         var bookItem = LendsFactory.MockBookItem(bookId, bookItemId);
-        
+
         _context.Books.Add(book);
         _context.BookItems.Add(bookItem);
-        
+
         await _context.SaveChangesAsync();
 
     }
@@ -260,9 +374,10 @@ public class LendsRepositoryTest : IDisposable
     {
         await CreateUser(userId);
         await CreateBookItem(bookId, bookItemId);
-        
-        
+
+
         _context.Lends.AddRange(lends);
         await _context.SaveChangesAsync();
     }
+
 }

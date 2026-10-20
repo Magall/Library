@@ -29,14 +29,15 @@ public static class LendsFactory
 
     }
 
-    public static Lend MockLend(Guid userId, Guid bookItemId, DateOnly startDate, DateOnly endDate)
+    public static Lend MockLend(Guid userId, Guid bookItemId, DateOnly startDate, DateOnly endDate, DateOnly? returnedDate = null)
     {
         return new Lend
         {
             UserId = userId,
             BookItemId = bookItemId,
             StartDate = startDate,
-            EndDate = endDate
+            EndDate = endDate,
+            ReturnedDate = returnedDate
         };
     }
 }
