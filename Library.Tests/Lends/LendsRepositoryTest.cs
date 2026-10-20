@@ -339,8 +339,88 @@ public class LendsRepositoryTest : IDisposable
         Assert.NotNull(lend);
         Assert.Equal(bookItemId, lend.BookItemId);
         Assert.Equal(userId, lend.UserId);
-        Assert.Equal(startDate,lend.StartDate);
+        Assert.Equal(startDate, lend.StartDate);
         Assert.Null(lend.ReturnedDate);
+    }
+
+    [Fact]
+    public async Task ReturnLend_UpdatesReturnedDateOfLendOnDb()
+    {
+        var userId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        var returnedDate = new DateOnly(2026, 10, 19);
+
+        var lend = LendsFactory.MockLend(userId, bookItemId, startDate, endDate);
+        await CreateLends([lend], bookId, userId, bookItemId);
+
+        var lendsRepository = new LendsRepository(_context);
+        await lendsRepository.ReturnLend(bookItemId, userId, returnedDate);
+
+        var lendRow = await _context.Lends.AsNoTracking().SingleOrDefaultAsync(pos => pos.LendId == lend.LendId);
+        Assert.NotNull(lendRow);
+        Assert.Equal(returnedDate, lendRow.ReturnedDate);
+
+    }
+
+    [Fact]
+    public async Task ReturnLend_ReturnsUpdatedLend()
+    {
+
+        var userId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        var returnedDate = new DateOnly(2026, 10, 19);
+        var lend = LendsFactory.MockLend(userId, bookItemId, startDate, endDate);
+        await CreateLends([lend], bookId, userId, bookItemId);
+
+        var lendsRepository = new LendsRepository(_context);
+        var returnedLend = await lendsRepository.ReturnLend(bookItemId, userId, returnedDate);
+
+        Assert.NotNull(returnedLend);
+        Assert.Equal(returnedDate, returnedLend.ReturnedDate);
+        Assert.Equal(lend.LendId, returnedLend.LendId);
+    }
+
+    [Fact]
+    public async Task ReturnLend_UpdatesOnlyOpenLend()
+    {
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var bookId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 12);
+        var endDate = new DateOnly(2026, 10, 19);
+        var returnedLendDate = new DateOnly(2026, 10, 20);
+        var historyReturnedDate = new DateOnly(2026, 9, 12);
+        var historyStartDate = new DateOnly(2026, 9, 5);
+        var historyEndDate = new DateOnly(2026, 9, 11);
+        var historyLend = LendsFactory.MockLend(
+            userId, bookItemId, historyStartDate, historyEndDate, historyReturnedDate);
+        var currentLend = LendsFactory.MockLend(userId, bookItemId, startDate, endDate);
+        await CreateLends([historyLend, currentLend],
+            bookId,
+            userId,
+            bookItemId
+        );
+
+        var lendsRepository = new LendsRepository(_context);
+        var returnedLend = await lendsRepository.ReturnLend(bookItemId, userId, returnedLendDate);
+        var returnedLendDbRow = await _context.Lends.AsNoTracking().SingleOrDefaultAsync(
+            cur => cur.LendId == currentLend.LendId);
+        var historyDbRow = await _context.Lends.AsNoTracking()
+            .SingleOrDefaultAsync(his => his.LendId == historyLend.LendId);
+
+        Assert.NotNull(returnedLendDbRow);
+        Assert.NotNull(returnedLend);
+        Assert.NotNull(historyDbRow);
+        Assert.Equal(returnedLendDate, returnedLendDbRow.ReturnedDate);
+        Assert.Equal(returnedLendDate, returnedLend.ReturnedDate);
+        Assert.Equal(historyReturnedDate, historyDbRow.ReturnedDate);
+
     }
 
     public void Dispose()

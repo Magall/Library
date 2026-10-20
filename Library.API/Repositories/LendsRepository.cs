@@ -40,9 +40,13 @@ public class LendsRepository : ILendsRepository
             lend.BookItemId == bookItemId && lend.ReturnedDate == null);
     }
 
-    public Task<Lend> ReturnLend(Guid bookItem, Guid userId, DateOnly returnedDate)
+    public async Task<Lend?> ReturnLend(Guid bookItemId, Guid userId, DateOnly returnedDate)
     {
-        throw new NotImplementedException();
+        var openLend = await GetOpenLend(bookItemId, userId);
+        openLend?.ReturnedDate = returnedDate;
+        await _context.SaveChangesAsync();
+        return openLend;
+
     }
 
     public async Task<Lend?> GetOpenLend(Guid bookItemId, Guid userId)
