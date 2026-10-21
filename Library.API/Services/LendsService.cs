@@ -1,10 +1,8 @@
-using Library.Database.Models;
 using Library.DTOs;
 using Library.Exceptions;
 using Library.Repositories;
 using Library.Settings;
 using Library.Utils;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
 
 namespace Library.Services;
