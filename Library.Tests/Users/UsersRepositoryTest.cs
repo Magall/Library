@@ -62,5 +62,28 @@ public class UserRepositoryTest : IDisposable
         Assert.Equal(userId, result.UserId);
     }
 
+    [Fact]
+    public async Task UpdateEndOfBan_ChangesEndOfBanInDB()
+    {
+        var userId = Guid.NewGuid();
+        var endOfBan = new DateOnly(2026, 11, 1);
+        var user = new User
+        {
+            UserId = userId,
+            Name = "Rafael Gomes",
+            SSN = "SSN01",
+            IsActive = true
+        };
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        await _repository.UpdateEndOfBan(userId, endOfBan);
+
+        var updatedRow = await _context.Users.SingleOrDefaultAsync(cur => cur.UserId == user.UserId);
+        Assert.NotNull(updatedRow);
+        Assert.Equal(endOfBan,updatedRow.EndOfBan);
+
+    }
+
 
 }

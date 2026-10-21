@@ -16,8 +16,11 @@ public class UserRepository : IUserRepository
         return await _context.Users.SingleOrDefaultAsync(user => user.SSN == SSN);
     }
 
-    public Task<User> UpdateEndOfBan(Guid userId, DateOnly endOfBan)
+    public async Task<User> UpdateEndOfBan(Guid userId, DateOnly endOfBan)
     {
-        throw new NotImplementedException();
+        var user = await _context.Users.SingleAsync(user => user.UserId == userId);
+        user.EndOfBan = endOfBan;
+        await _context.SaveChangesAsync();
+        return user;
     }
 }
