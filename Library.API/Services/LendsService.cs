@@ -58,16 +58,29 @@ public class LendsService : ILendsService
         {
             throw new LendNotFoundException($"This book {bookItemId} is not lent for this user {SSN}");
         }
-
         var returnedDate = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+
         var lendReturn = await _lendsRepository.ReturnLend(lend.BookItemId, user.UserId, returnedDate);
+
+        var lateInterval = returnedDate.DayNumber - lend.EndDate.DayNumber;
+
+
+        if (lateInterval > 0)
+        {
+            var endOfBan = DateExtensions.AddWorkingDays(returnedDate, (_options.BanishMultiplier * lateInterval));
+            user = await _usersRepository.UpdateEndOfBan(user.UserId, endOfBan);
+        }
+
+
+
         var result = new LendReturnResponseDto
         {
             SSN = user.SSN,
             Name = user.Name,
             ReturnedDate = lendReturn.ReturnedDate
                 ?? throw new InvalidOperationException("Lend was returned but has no ReturnedDate"),
-            BookItemId = lend.BookItemId
+            BookItemId = lend.BookItemId,
+            EndOfBan = lateInterval > 0 ? user.EndOfBan : null
         };
 
 

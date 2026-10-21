@@ -15,4 +15,9 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users.SingleOrDefaultAsync(user => user.SSN == SSN);
     }
+
+    public Task<User> UpdateEndOfBan(Guid userId, DateOnly endOfBan)
+    {
+        throw new NotImplementedException();
+    }
 }

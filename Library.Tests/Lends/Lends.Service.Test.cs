@@ -165,7 +165,6 @@ public class LendsServiceTest
         Assert.Equal("SSN001", response.SSN);
         Assert.Equal(new DateOnly(2026, 10, 19), response.ReturnalDate);
     }
-
     [Fact]
     public async Task ReturnLend_ThrowsUserNotFoundExceptionIfSSNnotFound()
     {
@@ -242,6 +241,59 @@ public class LendsServiceTest
         Assert.Equal(SSN, result.SSN);
         Assert.Equal(returnedDate, result.ReturnedDate);
         Assert.Equal(bookItemId, result.BookItemId);
+    }
+
+    [Fact]
+    public async Task ReturnLend_BansUserForDaysLateTimesMultiplier()
+    {
+        var daysLate = 1;
+        var banishMultiplier = 2;
+        var dueDate = new DateOnly(2026, 10, 12);
+        var returnedDate = DateExtensions.AddWorkingDays(dueDate, daysLate);
+        var timeProvider = new FakeTimeProvider
+            (new DateTimeOffset(returnedDate.ToDateTime(new TimeOnly(9, 0)), TimeSpan.Zero));
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var startDate = new DateOnly(2026, 10, 5);
+        var SSN = "SSN-001";
+        var usersName = "Rafael";
+        var lendsRepository = Substitute.For<ILendsRepository>();
+        var usersRepository = Substitute.For<IUserRepository>();
+        var options = new LendsOptions { BanishMultiplier = banishMultiplier };
+        var endOfBanDate = DateExtensions.AddWorkingDays(
+            DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime), daysLate * banishMultiplier);
+        usersRepository.GetUserBySSN(SSN).Returns(new User
+        {
+            UserId = userId,
+            SSN = SSN,
+            Name = usersName
+        });
+        lendsRepository.GetOpenLend(bookItemId, userId)
+            .Returns(LendsFactory.MockLend(userId, bookItemId, startDate, dueDate));
+
+        lendsRepository.ReturnLend(bookItemId, userId, returnedDate)
+            .Returns(new Lend
+            {
+                UserId = userId,
+                BookItemId = bookItemId,
+                StartDate = startDate,
+                EndDate = dueDate,
+                ReturnedDate = returnedDate
+            });
+        usersRepository.UpdateEndOfBan(userId, endOfBanDate).Returns(new User
+        {
+            UserId = userId,
+            SSN = SSN,
+            Name = usersName,
+            EndOfBan = endOfBanDate
+        });
+
+        var lendsService = new LendsService(usersRepository, lendsRepository, Options.Create(options), timeProvider);
+        var returnedLend = await lendsService.ReturnLend(bookItemId, SSN);
+
+        Assert.NotNull(returnedLend);
+        Assert.Equal(endOfBanDate, returnedLend.EndOfBan);
+        Assert.Equal(SSN, returnedLend.SSN);
     }
 
 
