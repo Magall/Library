@@ -1,3 +1,4 @@
+using Library.Database.Models;
 using Library.DTOs;
 using Library.Exceptions;
 using Library.Repositories;
@@ -24,13 +25,12 @@ public class LendsService : ILendsService
     public async Task<LendResponseDto> Lend(Guid bookItemId, string SSN)
     {
         var user = await _usersRepository.GetUserBySSN(SSN);
-        if (user is null)
-        {
-            throw new UserNotFoundException($"User not found by SSN {SSN}");
-        }
-        await BooksValidations(bookItemId, user.UserId);
-        var lendDurationInBusinessDays = _options.LendingDurationInWorkingDays;
         var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
+
+        UsersValidations(user, today, SSN);
+        await BooksValidations(bookItemId, user.UserId);
+
+        var lendDurationInBusinessDays = _options.LendingDurationInWorkingDays;
         var returnalDate = DateExtensions.AddWorkingDays(today, lendDurationInBusinessDays);
 
         var lend = await _lendsRepository.CreateLend(bookItemId, user.UserId, today, returnalDate);
@@ -61,7 +61,6 @@ public class LendsService : ILendsService
         var returnedDate = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
 
         var lendReturn = await _lendsRepository.ReturnLend(lend.BookItemId, user.UserId, returnedDate);
-
         var lateInterval = returnedDate.DayNumber - lend.EndDate.DayNumber;
 
 
@@ -70,8 +69,6 @@ public class LendsService : ILendsService
             var endOfBan = DateExtensions.AddWorkingDays(returnedDate, (_options.BanishMultiplier * lateInterval));
             user = await _usersRepository.UpdateEndOfBan(user.UserId, endOfBan);
         }
-
-
 
         var result = new LendReturnResponseDto
         {
@@ -100,6 +97,18 @@ public class LendsService : ILendsService
         if (isBookItemLent)
         {
             throw new BookAlreadyLentException($"This book is already lent {bookItemId}");
+        }
+    }
+
+    private static void UsersValidations(User? user, DateOnly today, string SSN)
+    {
+        if (user is null)
+        {
+            throw new UserNotFoundException($"User not found by SSN {SSN}");
+        }
+        if (user.EndOfBan is not null && user.EndOfBan >= today)
+        {
+            throw new UserBannedException($"User is banned until {user.EndOfBan}");
         }
     }
 }

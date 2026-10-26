@@ -12,6 +12,8 @@ using Library.Utils;
 using NSubstitute.ReturnsExtensions;
 using Library.Tests.Lends;
 using Library.Tests.Book;
+using SQLitePCL;
+using Microsoft.AspNetCore.Identity;
 
 namespace Library.Tests;
 
@@ -77,6 +79,7 @@ public class LendsServiceTest
             SSN = userSSN,
             IsActive = true,
 
+
         });
 
 
@@ -112,6 +115,31 @@ public class LendsServiceTest
 
         await Assert.ThrowsAsync<BookAlreadyLentException>(() =>
             lendsService.Lend(bookItemId, userSSN));
+
+    }
+
+    [Fact]
+    public async Task LendBook_ShowsExceptionWhenUserIsBanned()
+    {
+        var userSSN = "SSN-01";
+        var userId = Guid.NewGuid();
+        var bookItemId = Guid.NewGuid();
+        var usersRepository = Substitute.For<IUserRepository>();
+        var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
+        var currentDate = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
+        var lendsRepository = Substitute.For<ILendsRepository>();
+        var options = new LendsOptions { MaxSimultaneousLends = 2 };
+        usersRepository.GetUserBySSN(userSSN).Returns(new User
+        {
+            UserId = userId,
+            EndOfBan = currentDate,
+            SSN = userSSN,
+            Name = "Rafael"
+        });
+
+        var lendsService = new LendsService(usersRepository, lendsRepository, Options.Create<LendsOptions>(options), timeProvider);
+
+        await Assert.ThrowsAsync<UserBannedException>(() => lendsService.Lend(bookItemId, userSSN));
 
     }
 
